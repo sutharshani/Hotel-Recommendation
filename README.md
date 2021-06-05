@@ -1,5 +1,6 @@
-# Time-Series-Modelling
-Time Series Modelling
+# Hotel-Recommendation
+Hotel Recommendation
+
 
 # Table of Contents
 1. [Introduction](#introduction)
