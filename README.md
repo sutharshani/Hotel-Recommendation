@@ -53,7 +53,6 @@ Shani Kumar \
 
 ## Acknowledgement
 1. **Support Vector Machine (SVM)** Support Vector Machines (SVMs) is good at finding pairwise interactions in data, so I through it should be good at recommending a hotel cluster to a certain user. Though natively, they don’t support multiclass classification, there are techniques we can use to it viably classify one out of 100 hotel clusters.
-
 The benefit is that we can capture much more complex relationships between the datapoints without having to perform difficult transformations on our own. The downside is that the training time is much longer as it's much more computationally intensive. It provided highest & best cross validation score.
 
 2. **Naive Bayes classifier** Naive Bayes is a relatively simple classifier that can natively be run on multiclass data, so I thought at least try this type of classifier and see what kind of results we get initially.
