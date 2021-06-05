@@ -52,15 +52,16 @@ Shani Kumar \
 [back to top](#table-of-contents)
 
 ## Acknowledgement
-1. Support Vector Machine (SVM) Support Vector Machines (SVMs) is good at finding pairwise interactions in data, so I through it should be good at recommending a hotel cluster to a certain user. Though natively, they don’t support multiclass classification, there are techniques we can use to it viably classify one out of 100 hotel clusters.
-The benefit is that we can capture much more complex relationships between the datapoints without having to perform difficult transformations on our own. The downside is that the training time is much longer as it's much more computationally intensive.
-It provided highest & best cross validation score.
-2. Naive Bayes classifier Naive Bayes is a relatively simple classifier that can natively be run on multiclass data, so I thought at least try this type of classifier and see what kind of results we get initially.
+1. **Support Vector Machine (SVM)** Support Vector Machines (SVMs) is good at finding pairwise interactions in data, so I through it should be good at recommending a hotel cluster to a certain user. Though natively, they don’t support multiclass classification, there are techniques we can use to it viably classify one out of 100 hotel clusters.
+
+The benefit is that we can capture much more complex relationships between the datapoints without having to perform difficult transformations on our own. The downside is that the training time is much longer as it's much more computationally intensive. It provided highest & best cross validation score.
+
+2. **Naive Bayes classifier** Naive Bayes is a relatively simple classifier that can natively be run on multiclass data, so I thought at least try this type of classifier and see what kind of results we get initially.
 But it has the worst performance of the four models. Therefore, this classifier is not recommended for the problem at hand.
-3. Logistic Regression We chose to test Logistic Regression because it was a simple model we learned in class that can handle non-linear decision boundaries, which we were clearly dealing with.
+3. **Logistic Regression** We chose to test Logistic Regression because it was a simple model we learned in class that can handle non-linear decision boundaries, which we were clearly dealing with.
 Logistic Regression was close to the performance of SVM but slightly worse.
-4. K-Nearest Neighbor classifier KNN was a good simple model to try because it ‘trains’ very quickly by offsetting most of the computation to the actual testing portion. Additionally it is relatively intuitive how the model works.
-5. Random Forest classifier One of the largest weakness of Random Forest Classifiers is large class imbalances. In addition with many classes, the decision trees become very deep and complex which goes against the marginal differences that RF averaging is going for.
+4. **K-Nearest Neighbor classifier** KNN was a good simple model to try because it ‘trains’ very quickly by offsetting most of the computation to the actual testing portion. Additionally it is relatively intuitive how the model works.
+5. **Random Forest classifier** One of the largest weakness of Random Forest Classifiers is large class imbalances. In addition with many classes, the decision trees become very deep and complex which goes against the marginal differences that RF averaging is going for.
 KNN performed very similar to Logistic Regression for the model in question but it was much faster than Logistic Regression. \
 [back to top](#table-of-contents)
 
