@@ -1,0 +1,186 @@
+---
+title: "5.3 Assignment: Create Optimal Hotel Recommandation"
+author: "Shani Kumar"
+date: "7/07/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 5.3 Assignment: Create Optimal Hotel Recommandation
+
+All online travel agencies are scrambling to meet the Artificial Intelligence driven personalization standard set by Amazon and Netflix. In addition, the world of online travel has become a highly competitive space where brands try to capture our attention (and wallet) with recommending, comparing, matching, and sharing. For this assignment, we aim to create the optimal hotel recommendations for Expedia’s users that are searching for a hotel to book. For this assignment, you need to predict which “hotel cluster” the user is likely to book, given his (or her) search details. In doing so, you should be able to demonstrate your ability to use four different algorithms (of your choice). The data set can be found at [Kaggle: Expedia Hotel Recommendations](https://www.kaggle.com/c/expedia-hotel-recommendations/data). To get you started, I would suggest you use train.csv which captured the logs of user behavior and destinations.csv which contains information related to hotel reviews made by users. You are also required to write a one page summary of your approach in getting to your prediction methods. I expect you to use a combination of R and Python in your answer.
+
+
+## Part 1 - Import and show a glimple of data
+```{r echo=FALSE}
+# import libraries
+library(ggplot2)
+library(data.table)
+library(lubridate)
+library(corrplot)
+```
+
+Since the data is huge I am using first 100k records from **train.csv** dataset.
+
+```{r read, echo=FALSE}
+trn = fread("data/train.csv", header = T, nrows = 100000)
+
+# Show the data sample
+head(trn)
+```
+
+### Data structure:
+```{r echo=FALSE}
+str(trn)
+```
+
+is_mobile, is_package, channel, posa_continent, hotel_continent are categorical variables. So converting them in factor. Also date_time is defined as charater so I am converting it into date time format. After converting extracting year, month, day, weekday and hour from it.
+
+```{r echo=TRUE}
+# Convert into factor
+trn[, `:=`(is_mobile = as.factor(is_mobile),
+               is_package = as.factor(is_package),
+               channel = as.factor(channel),
+               posa_continent = as.factor(posa_continent),
+               hotel_continent = as.factor(hotel_continent))]
+
+# Convert into date time format
+trn[, date_time := parse_date_time(date_time, "%y-%m-%d %H:%M:%S")]
+trn[, srch_ci := parse_date_time(srch_ci, "%y-%m-%d")]
+trn[, srch_co := parse_date_time(srch_co, "%y-%m-%d")]
+
+# Extract year, month, day, week dat and hour
+trn[, `:=`(date_year = as.factor(year(date_time)), 
+               date_month = as.factor(month(date_time)), 
+               date_day = as.factor(day(date_time)), 
+               date_wday = as.factor(wday(date_time, label = T)), 
+               date_hour = as.factor(hour(date_time)),
+               ci_year = as.factor(year(srch_ci)),
+               ci_month = as.factor(month(srch_ci)),
+               ci_day = as.factor(day(srch_ci)),
+               co_year = as.factor(year(srch_co)),
+               co_month = as.factor(month(srch_co)),
+               co_day = as.factor(day(srch_co)))]
+```
+
+### Data Summary:
+```{r echo=FALSE}
+summary(trn)
+```
+
+### Explore Data:
+
+## Site_name - Barchart
+
+```{r echo=FALSE}
+d = trn[, .N, by = site_name][, j = .(site_name, Prop = N/ sum(N))]
+ggplot(d, aes(x = site_name, y = Prop)) +
+geom_bar(aes(fill = factor(site_name)), stat = 'identity' ) + scale_fill_discrete(name = 'site_name')
+```
+
+In the above chart we can see site name 2 is dominating set of other values so redrawing it after removing this value. We can see in below chart there are few site which gets more by user as compared to rest of the site names.
+
+```{r echo=FALSE}
+d = d[i = site_name != 2]
+ggplot(d, aes(x = site_name, y = Prop)) +
+geom_bar(aes(fill = factor(site_name)), stat = 'identity') + scale_fill_discrete(name = 'site_name')
+```
+
+## Mobile & Hotel cluster
+
+```{r echo=FALSE}
+d = trn[,j = .N, by = .(hotel_cluster, is_mobile)]
+ggplot(d, aes(x = is_mobile, y = hotel_cluster)) + geom_raster(aes(fill = N))
+```
+
+We can see in the above chart majority customers are not mobile user. Lets look at it a bit more by drawing relationship with hotel cluster. 
+
+```{r echo=FALSE}
+d = trn[,j = .N, by = .(hotel_cluster, is_mobile)][, Prop := N/ sum(N), by = .(hotel_cluster)]
+ggplot(d, aes(x = is_mobile, y = hotel_cluster)) + geom_raster(aes(fill = Prop))
+
+```
+Here calculated proportion over each hotel cluster and we can see all the hotel_clusters have more or less the same proportion among is_mobile 0 and 1, with just a few having a larger proportion than average.
+
+## is_package & Hotel cluster
+
+```{r echo=FALSE}
+d = trn[,j = .N, by = .(hotel_cluster, is_package)]
+ggplot(d, aes(x = hotel_cluster, y = N)) + geom_bar(aes(fill=factor(hotel_cluster)), stat = 'identity') + facet_grid(is_package~., labeller = label_both)
+```
+
+Here we can see that some hotel custer have more visibily based on package. Lets create proportion to see the same.
+
+```{r echo=FALSE}
+d = trn[,j = .N, by = .(hotel_cluster, is_package)][, Prop := N/ sum(N), by = .(hotel_cluster)]
+ggplot(d, aes(x = hotel_cluster, y = Prop)) + geom_bar(aes(fill=factor(hotel_cluster)) , stat = 'identity') + facet_grid(is_package~., labeller = label_both) + theme_dark()
+```
+
+Above chart shows clearly that some hotel cluster have more visibily on package.
+
+## marketing channel
+
+```{r echo=FALSE}
+d = trn[, j = .N, by = .(channel)][, Prop:=N/sum(N)]
+ggplot(d, aes(x=channel, y= Prop, fill = channel)) + geom_bar(stat = 'identity')
+```
+
+We can see in the above chart, channel 9 dominates rest of the channels proportions.
+
+```{r echo=FALSE}
+d = trn[,j = .N, by = .(date_year, channel)][order(date_year, channel)]
+ggplot(d, aes(x = channel, y = N, fill = channel)) + geom_bar(stat = 'identity') + facet_grid(date_year~.)
+```
+
+## Coverience Check
+
+Convert numeric Factor featues into numerics and dropping date_time, srch_ci and srch_co, because we have already extracted required details. Also dropping week_day feature becaue it will not work for coveriance calculation. Also I am concerting year, month and day from factor to integer. Doing all the work in seperate dataset I have copied.
+
+```{r echo=FALSE}
+trnCopy <- copy(trn)
+
+trnCopy[, `:=`(is_mobile = as.integer(is_mobile),
+               is_package = as.integer(is_package),
+               channel = as.integer(channel),
+               posa_continent = as.integer(posa_continent),
+               hotel_continent = as.integer(hotel_continent),
+               date_year = as.integer(date_year),
+               date_month = as.integer(date_month),
+               date_day = as.integer(date_day),
+               date_hour = as.integer(date_hour),
+               ci_year = as.integer(ci_year),
+               ci_month = as.integer(ci_month),
+               ci_day = as.integer(ci_day),
+               co_year = as.integer(co_year),
+               co_month = as.integer(co_month),
+               co_day = as.integer(co_day))]
+
+trnCopy$date_time <- NULL
+trnCopy$srch_ci <- NULL
+trnCopy$srch_co <- NULL
+trnCopy$date_wday <- NULL
+```
+
+Updated Dataset:
+
+```{r echo=FALSE}
+str(trnCopy)
+```
+
+**Coverience Matrix Plot**
+
+Coverience plots are taking a lot of time so I manually looked at the coveriance of hotel_cluster coverience agains rest of the variables.
+```{r echo=FALSE}
+cov1 <- cov(trnCopy)
+
+cov1
+```
+
+
+## Analysis Result
+We can see over the year usage of all the different channels increased a lot. we can see channel specially which got an increase of 100%. Also based on coverience we can see target variable is not corrected to any other dependent field. Based on this we can say linear model will not work for this dataset.
+
+
